@@ -7,9 +7,11 @@
 
 [中文文档](README.zh-CN.md)
 
-> **Not the same project as [7836246/cursor2api](https://github.com/7836246/cursor2api).**
-> That one wraps Cursor's free public docs chatbot; this one uses *your own paid
-> subscription* through Cursor's agent backend.
+> **Two other projects share this name.** Both wrap the *free* chatbot on Cursor's
+> website — [7836246/cursor2api](https://github.com/7836246/cursor2api) and
+> [gopkg-dev/cursor2api](https://github.com/gopkg-dev/cursor2api). This one is
+> different: it uses **your own paid subscription** through Cursor's agent backend.
+> See [comparison](#how-this-differs-from-the-free-chatbot-wrappers).
 
 It talks to Cursor's own `agent.v1.AgentService` backend directly — Connect-RPC over
 HTTP/2 with protobuf — and exposes it as `/v1/chat/completions`. No `cursor-agent`
@@ -129,6 +131,35 @@ scripts. If you aggregate several subscription providers behind
 [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI), see
 [docs/deploy-behind-cliproxyapi.md](docs/deploy-behind-cliproxyapi.md).
 
+## How this differs from the free-chatbot wrappers
+
+Several projects named `cursor2api` wrap the chatbot on Cursor's marketing/docs site
+(`cursor.com/learn`). That endpoint is anonymous and free, which makes those projects
+easier to start with — and gives them a completely different set of problems.
+
+| | free-chatbot wrappers | this project |
+|---|---|---|
+| Where the capability comes from | public chatbot on cursor.com | your paid Cursor subscription |
+| Authentication | none | your Cursor login (PKCE), auto-refreshed |
+| Anti-bot handling | required — Chrome TLS fingerprinting plus a side service that deobfuscates Cursor's rotating JS to mint tokens | none; this is an authenticated client of a real API |
+| Models | whatever the site widget exposes | 200+, read live from your account |
+| `tool_calls` | no | yes, with tool-result replay |
+| Quota | shared/free, rate limited | your own subscription |
+| Breaks when | Cursor rotates the anti-bot script | Cursor changes the agent protocol or version-gates clients |
+
+A note on whether those still work, since people ask: as of August 2026,
+[gopkg-dev/cursor2api](https://github.com/gopkg-dev/cursor2api) (Go, MIT) and its
+required companion `x-is-human-api` were both last pushed in October 2025, and its
+open issue #2 (March 2026) reports that the anti-bot JS URL its setup depends on no
+longer exists. Treat it as unmaintained unless that changes. Design-wise it is
+solid — SSE streaming, client-cancel propagation, TLS fingerprint spoofing — the
+fragility is inherent to scraping an anti-bot-protected public endpoint, not a flaw
+in the code.
+
+If all you want is a free tap for casual chat and you do not have a Cursor
+subscription, a free-chatbot wrapper is the right tool. If you pay for Cursor and want
+your quota as a real API with tool calling, use this.
+
 ## Configuration
 
 All env vars, all optional.
@@ -211,6 +242,11 @@ This project stands on other people's reverse-engineering. Specifically:
 - **[anyrobert/cursor-api-proxy](https://github.com/anyrobert/cursor-api-proxy)** — the
   CLI-wrapper approach that came first; this project is what you build after hitting
   its ceiling.
+- **[gopkg-dev/cursor2api](https://github.com/gopkg-dev/cursor2api)** and
+  **[7836246/cursor2api](https://github.com/7836246/cursor2api)** — the free-chatbot
+  wrappers that mapped out the OpenAI-shaped surface people expect from a `cursor2api`,
+  and a useful reference for SSE and cancellation handling even though the upstream
+  they target is a different one.
 - **[router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI)** — the
   "OAuth login → usable API" pattern that this follows, and a good place to put this
   behind if you aggregate several providers.

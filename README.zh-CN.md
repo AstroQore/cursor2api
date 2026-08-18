@@ -6,9 +6,10 @@
 
 [English](README.md)
 
-> **与 [7836246/cursor2api](https://github.com/7836246/cursor2api) 不是同一个项目。**
-> 那个封装的是 Cursor 官网免费的文档问答接口；本项目用的是**你自己的付费订阅**，
-> 走 Cursor 的 agent 后端。
+> **有另外两个同名项目。** [7836246/cursor2api](https://github.com/7836246/cursor2api)
+> 和 [gopkg-dev/cursor2api](https://github.com/gopkg-dev/cursor2api) 封装的都是 Cursor
+> 官网上的**免费**问答机器人。本项目不同：它用的是**你自己的付费订阅**，走 Cursor 的
+> agent 后端。详见[对比](#与免费问答封装类项目的区别)。
 
 直连 Cursor 自己的 `agent.v1.AgentService` 后端（Connect-RPC over HTTP/2 + protobuf），
 对外暴露成 `/v1/chat/completions`。不起 `cursor-agent` CLI 子进程，不用无头浏览器，
@@ -124,6 +125,31 @@ resp.choices[0].message.tool_calls[0].function.arguments   # '{"city":"Osaka"}'
 脚本。如果你用 [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) 聚合多个
 订阅型 provider，见 [docs/deploy-behind-cliproxyapi.md](docs/deploy-behind-cliproxyapi.md)。
 
+## 与免费问答封装类项目的区别
+
+有几个叫 `cursor2api` 的项目封装的是 Cursor 官网上的问答机器人（`cursor.com/learn`）。
+那个接口匿名免费，所以上手更容易，但也带来了一整套完全不同的问题。
+
+| | 免费问答封装 | 本项目 |
+|---|---|---|
+| 能力来源 | cursor.com 上的公开问答机器人 | 你的 Cursor 付费订阅 |
+| 认证 | 无 | 你的 Cursor 登录（PKCE），自动续期 |
+| 反爬对抗 | 必须做 —— Chrome TLS 指纹模拟，外加一个旁路服务反混淆 Cursor 轮换的 JS 来生成校验参数 | 不需要，这是真实 API 的已认证客户端 |
+| 模型 | 该网页组件提供的那些 | 200+，按你的账号实时读取 |
+| `tool_calls` | 无 | 有，含工具结果回放 |
+| 额度 | 共享的免费额度，有限流 | 你自己的订阅 |
+| 什么时候会坏 | Cursor 轮换反爬脚本时 | Cursor 改 agent 协议或卡客户端版本时 |
+
+关于它们现在还能不能用（经常有人问）：截至 2026 年 8 月，
+[gopkg-dev/cursor2api](https://github.com/gopkg-dev/cursor2api)（Go / MIT）及其必需的
+配套服务 `x-is-human-api` 最后一次提交都停在 2025 年 10 月，而它的 open issue #2
+（2026 年 3 月）反馈其部署说明依赖的那个反爬 JS 地址已经不存在了。除非有新进展，建议
+按"已停止维护"对待。设计本身是扎实的 —— SSE 流式、客户端取消传播、TLS 指纹模拟 ——
+脆弱性来自"抓一个有反爬保护的公开端点"这件事本身，不是代码的问题。
+
+如果你没有 Cursor 订阅、只想随便聊聊，那类免费封装才是对的工具。如果你在为 Cursor
+付费、想把额度变成带工具调用的真 API，用本项目。
+
 ## 配置
 
 全部是环境变量，全部可选。
@@ -195,6 +221,10 @@ Cursor 后端是 **agent 协议**，不是模型 API，所以这层做的是真�
   gRPC 流量分析工具与笔记。
 - **[anyrobert/cursor-api-proxy](https://github.com/anyrobert/cursor-api-proxy)** ——
   更早的 CLI 包装方案；本项目是撞到它天花板之后的产物。
+- **[gopkg-dev/cursor2api](https://github.com/gopkg-dev/cursor2api)** 与
+  **[7836246/cursor2api](https://github.com/7836246/cursor2api)** —— 免费问答封装类项目，
+  它们定义了大家对 `cursor2api` 这个名字所期待的 OpenAI 兼容形态；即便对接的上游不同，
+  其 SSE 与取消处理仍是有价值的参考。
 - **[router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI)** ——
   "OAuth 登录 → 可用 API" 这个范式的来源；如果你要聚合多个 provider，把本服务挂在
   它后面是个好选择。
