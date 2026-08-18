@@ -37,7 +37,7 @@
     "api-gateway",
     "tool-calling"
   ],
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "https://github.com/AstroQore/cursor-direct-api.git"

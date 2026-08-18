@@ -2,7 +2,7 @@
 
 **Use your Cursor subscription as an OpenAI-compatible API.**
 
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![license](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![image](https://img.shields.io/badge/ghcr.io-cursor--direct--api-blue)](https://github.com/AstroQore/cursor-direct-api/pkgs/container/cursor-direct-api)
 
 [中文文档](README.zh-CN.md)
@@ -210,6 +210,13 @@ This project stands on other people's reverse-engineering. Specifically:
 - **[router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI)** — the
   "OAuth login → usable API" pattern that this follows, and a good place to put this
   behind if you aggregate several providers.
+
+## License
+
+[AGPL-3.0](LICENSE). Note the network clause: if you run a modified version of this
+service and let other people reach it over a network, you have to offer them the
+source of your modified version. Running it unmodified, or purely for yourself,
+carries no such obligation.
 
 ## Legal
 

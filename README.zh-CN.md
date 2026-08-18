@@ -2,7 +2,7 @@
 
 **把你的 Cursor 订阅变成 OpenAI 兼容 API。**
 
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![license](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 [English](README.md)
 
@@ -194,6 +194,12 @@ Cursor 后端是 **agent 协议**，不是模型 API，所以这层做的是真�
 - **[router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI)** ——
   "OAuth 登录 → 可用 API" 这个范式的来源；如果你要聚合多个 provider，把本服务挂在
   它后面是个好选择。
+
+## 许可证
+
+[AGPL-3.0](LICENSE)。注意其中的网络条款：如果你**修改**了本服务并把它开放给别人通过
+网络使用，你需要向这些用户提供你修改版的源码。不修改直接用、或者只给自己用，则没有
+这项义务。
 
 ## 法律声明
 
