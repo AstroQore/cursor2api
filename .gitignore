@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.log
+
+# Local credentials — never commit these.
+accounts.json
+accounts.*.json
+.env
+.env.*
+!.env.example

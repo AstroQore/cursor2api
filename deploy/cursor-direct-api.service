@@ -1,0 +1,27 @@
+# Example systemd unit. Adjust paths, then:
+#   install -m644 deploy/cursor-direct-api.service /etc/systemd/system/
+#   systemctl daemon-reload && systemctl enable --now cursor-direct-api
+
+[Unit]
+Description=cursor-direct-api (OpenAI-compatible gateway for a Cursor subscription)
+Documentation=https://github.com/AstroQore/cursor-direct-api
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/cursor-direct-api
+EnvironmentFile=/etc/cursor-direct-api/env
+ExecStart=/usr/bin/node /opt/cursor-direct-api/dist/index.cjs
+Restart=always
+RestartSec=3
+
+# The account file holds live Cursor session tokens.
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.github
+accounts.json
+accounts.*.json
+.env
+.env.*
+!.env.example
+*.log
+deploy
+docs

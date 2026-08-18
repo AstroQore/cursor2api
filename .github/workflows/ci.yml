@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run build:bundle
+      - name: smoke — server boots and answers /health
+        run: |
+          CURSOR_DIRECT_PROTO_DIR="$PWD/proto" CURSOR_DIRECT_AUTH_FILE=/tmp/none.json \
+            node dist/index.cjs &
+          for i in $(seq 1 20); do
+            sleep 0.5
+            curl -fsS http://127.0.0.1:8790/health && break
+          done

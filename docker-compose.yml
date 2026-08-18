@@ -1,0 +1,35 @@
+services:
+  cursor-direct-api:
+    image: ghcr.io/astroqore/cursor-direct-api:latest
+    # To build locally instead of pulling: comment out `image` and uncomment this.
+    # build: .
+    container_name: cursor-direct-api
+    restart: unless-stopped
+    ports:
+      - "8790:8790"
+    volumes:
+      # accounts.json lives here. Create it first:
+      #   docker compose run --rm cursor-direct-api node scripts/login.mjs --out /data/accounts.json
+      - ./data:/data
+    environment:
+      # Require callers to send `Authorization: Bearer <key>`. Set this before
+      # exposing the port to anything but localhost.
+      # - CURSOR_DIRECT_API_KEY=sk-your-secret
+
+      # Model names are served as `cursor-<upstream id>`; set to "" for raw ids.
+      - CURSOR_DIRECT_MODEL_PREFIX=cursor-
+
+      # Hide Cursor's native tool registry so the model only sees the tools your
+      # client declares. Set to `*` to keep the natives.
+      - CURSOR_ALLOWED_NATIVE_TOOLS=mcp_tool_call
+
+      # Route upstream traffic through a SOCKS5 proxy if your host needs one.
+      # - CURSOR_DIRECT_PROXY_URL=socks5://host.docker.internal:1080
+
+      # Bump this when Cursor version-gates older clients.
+      # - CURSOR_DIRECT_CLIENT_VERSION=cli-2026.08.11-e8db854
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8790/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

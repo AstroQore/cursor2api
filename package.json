@@ -1,0 +1,45 @@
+{
+  "name": "cursor-direct-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Use your Cursor subscription as an OpenAI-compatible API. Speaks Cursor's agent.v1 protocol directly \u2014 real tool_calls, streaming, no cursor-agent CLI subprocess.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "probe": "node scripts/probe.mjs",
+    "build:bundle": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
+    "login": "node scripts/login.mjs",
+    "import-local": "node scripts/import-local-token.mjs"
+  },
+  "dependencies": {
+    "protobufjs": "^7.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "esbuild": "^0.24.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "cursor",
+    "cursor2api",
+    "openai-compatible",
+    "proxy",
+    "llm",
+    "api-gateway",
+    "tool-calling"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AstroQore/cursor-direct-api.git"
+  }
+}
