@@ -47,18 +47,16 @@ curl http://127.0.0.1:8790/v1/chat/completions \
   -d '{"model":"cursor-claude-sonnet-5-thinking-high","messages":[{"role":"user","content":"你好"}]}'
 ```
 
+`docker compose up -d` 会拉取已发布的镜像；拉不到时自动从源码构建，命令不变。
+
 ### Docker（单条命令）
-
-```bash
-docker run -d --name cursor-direct-api -p 8790:8790 -v "$PWD/data:/data" \
-  ghcr.io/astroqore/cursor-direct-api:latest
-```
-
-启动前先在同一个卷里登录一次：
 
 ```bash
 docker run --rm -it -v "$PWD/data:/data" ghcr.io/astroqore/cursor-direct-api:latest \
   node scripts/login.mjs --out /data/accounts.json
+
+docker run -d --name cursor-direct-api -p 8790:8790 -v "$PWD/data:/data" \
+  ghcr.io/astroqore/cursor-direct-api:latest
 ```
 
 ### 源码运行（Node 20+）

@@ -48,18 +48,17 @@ curl http://127.0.0.1:8790/v1/chat/completions \
   -d '{"model":"cursor-claude-sonnet-5-thinking-high","messages":[{"role":"user","content":"hi"}]}'
 ```
 
+`docker compose up -d` pulls the published image, or builds from source if the
+registry copy is unavailable — either way the command is the same.
+
 ### Docker (single command)
-
-```bash
-docker run -d --name cursor-direct-api -p 8790:8790 -v "$PWD/data:/data" \
-  ghcr.io/astroqore/cursor-direct-api:latest
-```
-
-Run the login once against the same volume before starting:
 
 ```bash
 docker run --rm -it -v "$PWD/data:/data" ghcr.io/astroqore/cursor-direct-api:latest \
   node scripts/login.mjs --out /data/accounts.json
+
+docker run -d --name cursor-direct-api -p 8790:8790 -v "$PWD/data:/data" \
+  ghcr.io/astroqore/cursor-direct-api:latest
 ```
 
 ### From source (Node 20+)

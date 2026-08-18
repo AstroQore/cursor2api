@@ -1,8 +1,8 @@
 services:
   cursor-direct-api:
     image: ghcr.io/astroqore/cursor-direct-api:latest
-    # To build locally instead of pulling: comment out `image` and uncomment this.
-    # build: .
+    # Falls back to building from source if the image can't be pulled.
+    build: .
     container_name: cursor-direct-api
     restart: unless-stopped
     ports:
