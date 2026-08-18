@@ -112,7 +112,7 @@ async function get(path) {
       ":method": "GET",
       ":path": path,
       accept: "application/json",
-      "user-agent": "cursor-direct-api/login",
+      "user-agent": "cursor2api/login",
     });
     req.on("response", (h) => (status = Number(h[":status"] || 0)));
     req.on("data", (c) => chunks.push(c));

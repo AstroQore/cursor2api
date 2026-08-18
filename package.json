@@ -1,8 +1,8 @@
 {
-  "name": "cursor-direct-api",
+  "name": "cursor2api",
   "version": "0.1.0",
   "private": true,
-  "description": "Use your Cursor subscription as an OpenAI-compatible API. Speaks Cursor's agent.v1 protocol directly \u2014 real tool_calls, streaming, no cursor-agent CLI subprocess.",
+  "description": "Use your Cursor subscription as an OpenAI-compatible API. Speaks Cursor's agent.v1 protocol directly — real tool_calls, streaming, no cursor-agent CLI subprocess.",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
@@ -40,6 +40,6 @@
   "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AstroQore/cursor-direct-api.git"
+    "url": "https://github.com/AstroQore/cursor2api.git"
   }
 }

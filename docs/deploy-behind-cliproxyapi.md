@@ -11,12 +11,12 @@ Keep it on `127.0.0.1` and set an API key, since CPA is the only thing that shou
 it:
 
 ```ini
-# /etc/cursor-direct-api/env
+# /etc/cursor2api/env
 CURSOR_DIRECT_HOST=127.0.0.1
 CURSOR_DIRECT_PORT=8790
 CURSOR_DIRECT_API_KEY=<random>
-CURSOR_DIRECT_AUTH_FILE=/etc/cursor-direct-api/accounts.json
-CURSOR_DIRECT_PROTO_DIR=/opt/cursor-direct-api/proto
+CURSOR_DIRECT_AUTH_FILE=/etc/cursor2api/accounts.json
+CURSOR_DIRECT_PROTO_DIR=/opt/cursor2api/proto
 CURSOR_DIRECT_MODEL_PREFIX=cursor-
 CURSOR_ALLOWED_NATIVE_TOOLS=mcp_tool_call
 ```
@@ -25,7 +25,7 @@ Deploy the bundle rather than the source tree if the box has `node` but no `npm`
 
 ```bash
 npm run build:bundle
-rsync -a dist/index.cjs proto/ scripts/ server:/opt/cursor-direct-api/
+rsync -a dist/index.cjs proto/ scripts/ server:/opt/cursor2api/
 ```
 
 ## 2. Generate the CPA block
@@ -70,7 +70,7 @@ listener disappears from the host and CPA can no longer reach it — while the s
 still logs that it is listening. Check the egress path with:
 
 ```bash
-ss -tnp | grep "pid=$(systemctl show -p MainPID --value cursor-direct-api)"
+ss -tnp | grep "pid=$(systemctl show -p MainPID --value cursor2api)"
 ```
 
 The only outbound connection should be to your SOCKS port.

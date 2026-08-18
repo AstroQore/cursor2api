@@ -15,7 +15,7 @@ const server = createServer({ config, pool, log });
 
 server.listen(config.port, config.host, () => {
   log(
-    `cursor-direct-api listening on http://${config.host}:${config.port} ` +
+    `cursor2api listening on http://${config.host}:${config.port} ` +
       `upstream=${config.cursorBaseUrl} prefix="${config.modelPrefix}" ` +
       `accounts=${pool.size()} allowed-native-tools=${config.allowedNativeTools.join(",") || "(all)"} ` +
       `proxy=${config.proxyUrl ?? "direct"}`,

@@ -1,4 +1,4 @@
-# cursor-direct-api
+# cursor2api
 
 **把你的 Cursor 订阅变成 OpenAI 兼容 API。**
 
@@ -6,12 +6,16 @@
 
 [English](README.md)
 
+> **与 [7836246/cursor2api](https://github.com/7836246/cursor2api) 不是同一个项目。**
+> 那个封装的是 Cursor 官网免费的文档问答接口；本项目用的是**你自己的付费订阅**，
+> 走 Cursor 的 agent 后端。
+
 直连 Cursor 自己的 `agent.v1.AgentService` 后端（Connect-RPC over HTTP/2 + protobuf），
 对外暴露成 `/v1/chat/completions`。不起 `cursor-agent` CLI 子进程，不用无头浏览器，
 不做网页抓取。
 
 ```
-你的应用 ──► /v1/chat/completions ──► cursor-direct-api ──► api2.cursor.sh
+你的应用 ──► /v1/chat/completions ──► cursor2api ──► api2.cursor.sh
              (OpenAI 格式)             (协议翻译层)           (你的订阅)
 ```
 
@@ -31,12 +35,12 @@
 ### Docker Compose（推荐）
 
 ```bash
-git clone https://github.com/AstroQore/cursor-direct-api.git
-cd cursor-direct-api
+git clone https://github.com/AstroQore/cursor2api.git
+cd cursor2api
 mkdir -p data
 
 # 1. 登录 —— 会打印一个 URL，用任意浏览器打开并确认
-docker compose run --rm cursor-direct-api node scripts/login.mjs --out /data/accounts.json
+docker compose run --rm cursor2api node scripts/login.mjs --out /data/accounts.json
 
 # 2. 启动
 docker compose up -d
@@ -52,11 +56,11 @@ curl http://127.0.0.1:8790/v1/chat/completions \
 ### Docker（单条命令）
 
 ```bash
-docker run --rm -it -v "$PWD/data:/data" ghcr.io/astroqore/cursor-direct-api:latest \
+docker run --rm -it -v "$PWD/data:/data" ghcr.io/astroqore/cursor2api:latest \
   node scripts/login.mjs --out /data/accounts.json
 
-docker run -d --name cursor-direct-api -p 8790:8790 -v "$PWD/data:/data" \
-  ghcr.io/astroqore/cursor-direct-api:latest
+docker run -d --name cursor2api -p 8790:8790 -v "$PWD/data:/data" \
+  ghcr.io/astroqore/cursor2api:latest
 ```
 
 ### 源码运行（Node 20+）

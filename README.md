@@ -1,18 +1,22 @@
-# cursor-direct-api
+# cursor2api
 
 **Use your Cursor subscription as an OpenAI-compatible API.**
 
 [![license](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
-[![image](https://img.shields.io/badge/ghcr.io-cursor--direct--api-blue)](https://github.com/AstroQore/cursor-direct-api/pkgs/container/cursor-direct-api)
+[![image](https://img.shields.io/badge/ghcr.io-cursor2api-blue)](https://github.com/AstroQore/cursor2api/pkgs/container/cursor2api)
 
 [中文文档](README.zh-CN.md)
+
+> **Not the same project as [7836246/cursor2api](https://github.com/7836246/cursor2api).**
+> That one wraps Cursor's free public docs chatbot; this one uses *your own paid
+> subscription* through Cursor's agent backend.
 
 It talks to Cursor's own `agent.v1.AgentService` backend directly — Connect-RPC over
 HTTP/2 with protobuf — and exposes it as `/v1/chat/completions`. No `cursor-agent`
 CLI subprocess, no headless browser, no scraping.
 
 ```
-your app ──► /v1/chat/completions ──► cursor-direct-api ──► api2.cursor.sh
+your app ──► /v1/chat/completions ──► cursor2api ──► api2.cursor.sh
              (OpenAI shape)            (protocol bridge)     (your subscription)
 ```
 
@@ -32,12 +36,12 @@ your app ──► /v1/chat/completions ──► cursor-direct-api ──► ap
 ### Docker Compose (recommended)
 
 ```bash
-git clone https://github.com/AstroQore/cursor-direct-api.git
-cd cursor-direct-api
+git clone https://github.com/AstroQore/cursor2api.git
+cd cursor2api
 mkdir -p data
 
 # 1. sign in — prints a URL, open it in any browser and approve
-docker compose run --rm cursor-direct-api node scripts/login.mjs --out /data/accounts.json
+docker compose run --rm cursor2api node scripts/login.mjs --out /data/accounts.json
 
 # 2. start
 docker compose up -d
@@ -54,11 +58,11 @@ registry copy is unavailable — either way the command is the same.
 ### Docker (single command)
 
 ```bash
-docker run --rm -it -v "$PWD/data:/data" ghcr.io/astroqore/cursor-direct-api:latest \
+docker run --rm -it -v "$PWD/data:/data" ghcr.io/astroqore/cursor2api:latest \
   node scripts/login.mjs --out /data/accounts.json
 
-docker run -d --name cursor-direct-api -p 8790:8790 -v "$PWD/data:/data" \
-  ghcr.io/astroqore/cursor-direct-api:latest
+docker run -d --name cursor2api -p 8790:8790 -v "$PWD/data:/data" \
+  ghcr.io/astroqore/cursor2api:latest
 ```
 
 ### From source (Node 20+)

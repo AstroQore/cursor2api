@@ -1,0 +1,27 @@
+# Example systemd unit. Adjust paths, then:
+#   install -m644 deploy/cursor2api.service /etc/systemd/system/
+#   systemctl daemon-reload && systemctl enable --now cursor2api
+
+[Unit]
+Description=cursor2api (OpenAI-compatible gateway for a Cursor subscription)
+Documentation=https://github.com/AstroQore/cursor2api
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/cursor2api
+EnvironmentFile=/etc/cursor2api/env
+ExecStart=/usr/bin/node /opt/cursor2api/dist/index.cjs
+Restart=always
+RestartSec=3
+
+# The account file holds live Cursor session tokens.
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

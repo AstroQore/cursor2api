@@ -1,15 +1,15 @@
 services:
-  cursor-direct-api:
-    image: ghcr.io/astroqore/cursor-direct-api:latest
+  cursor2api:
+    image: ghcr.io/astroqore/cursor2api:latest
     # Falls back to building from source if the image can't be pulled.
     build: .
-    container_name: cursor-direct-api
+    container_name: cursor2api
     restart: unless-stopped
     ports:
       - "8790:8790"
     volumes:
       # accounts.json lives here. Create it first:
-      #   docker compose run --rm cursor-direct-api node scripts/login.mjs --out /data/accounts.json
+      #   docker compose run --rm cursor2api node scripts/login.mjs --out /data/accounts.json
       - ./data:/data
     environment:
       # Require callers to send `Authorization: Bearer <key>`. Set this before
