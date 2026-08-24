@@ -8,10 +8,12 @@
 import { randomUUID } from "node:crypto";
 import http from "node:http";
 import type { Config } from "./config.js";
+import type { CursorUpstreamError } from "./cursor/errors.js";
 import type { AccountPool } from "./auth.js";
 import { listModelIds, toModelList, upstreamId } from "./models.js";
 import { runTurn, type TurnEvent } from "./cursor/session.js";
 import { buildTurnInput, type OpenAIChatRequest } from "./openai/translate.js";
+import { openAIErrorResponse } from "./openai/errors.js";
 
 export interface ServerDeps {
   config: Config;
@@ -121,6 +123,7 @@ interface Collected {
   usage: { inputTokens?: number; outputTokens?: number };
   reason: "stop" | "tool_calls" | "error";
   error?: string;
+  upstreamError?: CursorUpstreamError;
 }
 
 async function collect(events: AsyncGenerator<TurnEvent>): Promise<Collected> {
@@ -135,6 +138,7 @@ async function collect(events: AsyncGenerator<TurnEvent>): Promise<Collected> {
     } else if (ev.type === "done") {
       out.reason = ev.reason;
       out.error = ev.error;
+      out.upstreamError = ev.upstreamError;
     }
   }
   return out;
@@ -150,7 +154,8 @@ async function bufferResponse(
   const result = await collect(events);
   if (result.reason === "error") {
     deps.log(`upstream error (${accountLabel}): ${result.error}`);
-    sendJson(res, 502, { error: { message: result.error ?? "upstream error", type: "upstream_error" } });
+    const mapped = openAIErrorResponse(result.error ?? "upstream error", result.upstreamError);
+    sendJson(res, mapped.status, mapped.payload);
     return;
   }
   const id = `chatcmpl-${randomUUID()}`;
@@ -241,12 +246,13 @@ async function streamResponse(
     } else if (ev.type === "done") {
       if (ev.reason === "error") {
         deps.log(`upstream error (${accountLabel}): ${ev.error}`);
+        const mapped = openAIErrorResponse(ev.error ?? "upstream error", ev.upstreamError);
         if (!opened) {
-          sendJson(res, 502, { error: { message: ev.error ?? "upstream error", type: "upstream_error" } });
+          sendJson(res, mapped.status, mapped.payload);
           return;
         }
         // Mid-stream failures can only be reported inside the stream.
-        emit(res, { error: { message: ev.error ?? "upstream error", type: "upstream_error" } });
+        emit(res, mapped.payload);
         res.write("data: [DONE]\n\n");
         res.end();
         return;

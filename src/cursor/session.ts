@@ -21,6 +21,11 @@
 import { createHash, randomUUID } from "node:crypto";
 import * as zlib from "node:zlib";
 import type { Config } from "../config.js";
+import {
+  formatCursorError,
+  parseCursorErrorPayload,
+  type CursorUpstreamError,
+} from "./errors.js";
 import { connectH2 } from "./h2.js";
 import { AgentClientMessage, AgentServerMessage, decodeArgValue, toBytes } from "./proto.js";
 
@@ -37,7 +42,12 @@ export type TurnEvent =
   | { type: "thinking"; delta: string }
   | { type: "tool_call"; id: string; name: string; args: Record<string, unknown> }
   | { type: "usage"; inputTokens?: number; outputTokens?: number }
-  | { type: "done"; reason: "stop" | "tool_calls" | "error"; error?: string };
+  | {
+      type: "done";
+      reason: "stop" | "tool_calls" | "error";
+      error?: string;
+      upstreamError?: CursorUpstreamError;
+    };
 
 export interface RunTurnOptions {
   token: string;
@@ -189,18 +199,16 @@ export async function* runTurn(opts: RunTurnOptions): AsyncGenerator<TurnEvent> 
 
   function endStreamEvent(payload: Buffer): TurnEvent {
     const trailer = payload.toString("utf8");
-    try {
-      const parsed = JSON.parse(trailer) as { error?: { code?: string; message?: string } };
-      if (parsed.error) {
-        return {
-          type: "done",
-          reason: "error",
-          error: `${parsed.error.code ?? "error"}: ${parsed.error.message ?? trailer}`,
-        };
-      }
-    } catch {
-      if (trailer.trim()) return { type: "done", reason: "error", error: trailer.slice(0, 500) };
+    const upstreamError = parseCursorErrorPayload(payload);
+    if (upstreamError) {
+      return {
+        type: "done",
+        reason: "error",
+        error: formatCursorError(upstreamError, trailer),
+        upstreamError,
+      };
     }
+    if (trailer.trim()) return { type: "done", reason: "error", error: trailer.slice(0, 500) };
     return { type: "done", reason: "stop" };
   }
 
