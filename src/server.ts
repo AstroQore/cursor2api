@@ -121,6 +121,7 @@ interface Collected {
   usage: { inputTokens?: number; outputTokens?: number };
   reason: "stop" | "tool_calls" | "error";
   error?: string;
+  code?: string;
 }
 
 async function collect(events: AsyncGenerator<TurnEvent>): Promise<Collected> {
@@ -135,6 +136,7 @@ async function collect(events: AsyncGenerator<TurnEvent>): Promise<Collected> {
     } else if (ev.type === "done") {
       out.reason = ev.reason;
       out.error = ev.error;
+      out.code = ev.code;
     }
   }
   return out;
@@ -150,7 +152,8 @@ async function bufferResponse(
   const result = await collect(events);
   if (result.reason === "error") {
     deps.log(`upstream error (${accountLabel}): ${result.error}`);
-    sendJson(res, 502, { error: { message: result.error ?? "upstream error", type: "upstream_error" } });
+    const { status, body } = upstreamError(result.code, result.error);
+    sendJson(res, status, body);
     return;
   }
   const id = `chatcmpl-${randomUUID()}`;
@@ -241,12 +244,13 @@ async function streamResponse(
     } else if (ev.type === "done") {
       if (ev.reason === "error") {
         deps.log(`upstream error (${accountLabel}): ${ev.error}`);
+        const { status, body } = upstreamError(ev.code, ev.error);
         if (!opened) {
-          sendJson(res, 502, { error: { message: ev.error ?? "upstream error", type: "upstream_error" } });
+          sendJson(res, status, body);
           return;
         }
         // Mid-stream failures can only be reported inside the stream.
-        emit(res, { error: { message: ev.error ?? "upstream error", type: "upstream_error" } });
+        emit(res, body);
         res.write("data: [DONE]\n\n");
         res.end();
         return;
@@ -281,6 +285,36 @@ function chunk(
     created,
     model,
     choices: [{ index: 0, delta, finish_reason: finishReason }],
+  };
+}
+
+/**
+ * Connect codes that a caller can act on differently, mapped to the HTTP status an
+ * OpenAI client expects. Quota exhaustion is the one that matters in practice: as a
+ * 502 it reads as a broken gateway, so clients and aggregators give up instead of
+ * backing off and retrying. Anything unrecognised stays a 502 rather than being
+ * dressed up as a client error.
+ */
+const STATUS_BY_CODE: Record<string, number> = {
+  resource_exhausted: 429,
+  unauthenticated: 401,
+  permission_denied: 403,
+  invalid_argument: 400,
+  not_found: 404,
+  unimplemented: 501,
+  unavailable: 503,
+  deadline_exceeded: 504,
+};
+
+function upstreamError(
+  code: string | undefined,
+  message: string | undefined,
+): { status: number; body: { error: { message: string; type: string; code?: string } } } {
+  const status = (code ? STATUS_BY_CODE[code] : undefined) ?? 502;
+  const type = status === 429 ? "rate_limit_exceeded" : "upstream_error";
+  return {
+    status,
+    body: { error: { message: message ?? "upstream error", type, ...(code ? { code } : {}) } },
   };
 }
 
