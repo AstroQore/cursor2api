@@ -27,7 +27,7 @@
 | 多轮 agent loop（工具结果回放） | ✅ |
 | **工具集由调用方控制** —— Cursor 自带工具全部隐藏 | ✅ |
 | 200+ 模型，按账号实时拉取 | ✅ |
-| 多账号池，轮询 + 失败冷却 | ✅ |
+| 多账号池，轮询 | ✅ |
 | token 自动刷新 | ✅ |
 | 客户端 `system` 提示词 | ⚠️ 尽力而为，[见下](#已知限制) |
 
@@ -86,7 +86,8 @@ node dist/index.cjs
 `cursorAuth/accessToken`）。自己电脑上更省事。
 
 两个脚本都写 0600 权限的文件，只打印元信息，不打印 token。多账号就带
-`--merge --label 名字` 各跑一次；池子会轮询，某个账号失败后冷却 60 秒。
+`--merge --label 名字` 各跑一次；池子会轮询。（池子里有冷却逻辑，但目前没有调用方——
+失败的账号不会被摘掉，下一轮照常轮到它。）
 
 access token 有效期约两个月，到期前会用 refresh token 自动续，所以正常只需登录一次。
 
@@ -120,6 +121,10 @@ resp = client.chat.completions.create(
 )
 resp.choices[0].message.tool_calls[0].function.arguments   # '{"city":"Osaka"}'
 ```
+
+错误会带真实状态码，不再一律 502：上游 Connect code 会映射成 OpenAI 客户端预期的状态，
+订阅配额耗尽返回 `429` / `rate_limit_exceeded`，聚合层因此会退避重试，而不是把网关当成
+挂了。其余上游故障仍然是 `502`。
 
 任何吃 OpenAI 格式的东西都能接：Cline、Roo、Continue、LobeChat、one-api，或者你自己的
 脚本。如果你用 [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) 聚合多个

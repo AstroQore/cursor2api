@@ -37,7 +37,7 @@ export type TurnEvent =
   | { type: "thinking"; delta: string }
   | { type: "tool_call"; id: string; name: string; args: Record<string, unknown> }
   | { type: "usage"; inputTokens?: number; outputTokens?: number }
-  | { type: "done"; reason: "stop" | "tool_calls" | "error"; error?: string };
+  | { type: "done"; reason: "stop" | "tool_calls" | "error"; error?: string; code?: string };
 
 export interface RunTurnOptions {
   token: string;
@@ -49,6 +49,26 @@ export interface RunTurnOptions {
   tools: McpToolDefinition[];
   config: Config;
   signal?: AbortSignal;
+}
+
+/**
+ * Upstream tool-call ids are not always safe to hand back to a caller: grok models
+ * return two ids joined by a literal newline (`call-<uuid>-0\nfc_<uuid>_0`). The
+ * caller round-trips this string as `tool_call_id`, and anything that re-encodes it
+ * under a stricter schema — Anthropic's `tool_use_id` pattern, for one — rejects the
+ * raw form, so fold everything outside the id alphabet into `_`.
+ */
+function safeToolCallId(raw: unknown): string {
+  const id = String(raw ?? "").replace(/[^A-Za-z0-9_-]/g, "_");
+  return id || `call_${randomUUID()}`;
+}
+
+/** Map an upstream HTTP status onto the Connect code the trailer would have carried. */
+function connectCodeForHttp(status: number): string | undefined {
+  if (status === 429) return "resource_exhausted";
+  if (status === 401) return "unauthenticated";
+  if (status === 403) return "permission_denied";
+  return undefined;
 }
 
 const FLAG_COMPRESSED = 0x01;
@@ -154,7 +174,14 @@ export async function* runTurn(opts: RunTurnOptions): AsyncGenerator<TurnEvent> 
 
   req.on("response", (h) => {
     const status = Number(h[":status"] || 0);
-    if (status !== 200) end({ type: "done", reason: "error", error: `upstream HTTP ${status}` });
+    if (status !== 200) {
+      end({
+        type: "done",
+        reason: "error",
+        code: connectCodeForHttp(status),
+        error: `upstream HTTP ${status}`,
+      });
+    }
   });
 
   let buffer = Buffer.alloc(0);
@@ -195,6 +222,7 @@ export async function* runTurn(opts: RunTurnOptions): AsyncGenerator<TurnEvent> 
         return {
           type: "done",
           reason: "error",
+          code: parsed.error.code,
           error: `${parsed.error.code ?? "error"}: ${parsed.error.message ?? trailer}`,
         };
       }
@@ -256,7 +284,7 @@ export async function* runTurn(opts: RunTurnOptions): AsyncGenerator<TurnEvent> 
         for (const [key, raw] of Object.entries(a.args ?? {})) args[key] = decodeArgValue(raw);
         push({
           type: "tool_call",
-          id: String(a.toolCallId ?? randomUUID()),
+          id: safeToolCallId(a.toolCallId),
           name: String(a.name ?? a.toolName ?? "unknown"),
           args,
         });
@@ -283,7 +311,7 @@ export async function* runTurn(opts: RunTurnOptions): AsyncGenerator<TurnEvent> 
   req.on("end", () => end({ type: "done", reason: "stop" }));
 
   const timer = setTimeout(
-    () => end({ type: "done", reason: "error", error: "upstream timeout" }),
+    () => end({ type: "done", reason: "error", code: "deadline_exceeded", error: "upstream timeout" }),
     config.requestTimeoutMs,
   );
   const onAbort = (): void => end({ type: "done", reason: "error", error: "client aborted" });

@@ -29,7 +29,7 @@ your app ──► /v1/chat/completions ──► cursor2api ──► api2.curs
 | Multi-turn agent loops (tool results replayed) | ✅ |
 | **Caller controls the tool set** — Cursor's native tools hidden | ✅ |
 | 200+ models, fetched live from your account | ✅ |
-| Multi-account pool, round-robin + cooldown | ✅ |
+| Multi-account pool, round-robin | ✅ |
 | Automatic token refresh | ✅ |
 | Client-supplied `system` prompt | ⚠️ best effort — [see below](#limitations) |
 
@@ -89,8 +89,9 @@ if the box needs one to reach `cursor.com`.
 desktop install (`state.vscdb`). Handy on your own laptop.
 
 Both write mode-0600 files and print only metadata, never the tokens. For several
-accounts, run either with `--merge --label some-name`; the pool round-robins over them
-and cools an account down for 60s after a failure.
+accounts, run either with `--merge --label some-name`; the pool round-robins over
+them. (There is a cooldown path in the pool, but nothing calls it yet — a failing
+account is retried on its next turn rather than being parked.)
 
 Access tokens last about two months and are refreshed automatically via the refresh
 token, so a one-time login is normally all you need.
@@ -125,6 +126,11 @@ resp = client.chat.completions.create(
 )
 resp.choices[0].message.tool_calls[0].function.arguments   # '{"city":"Osaka"}'
 ```
+
+Errors carry a real status code rather than a blanket `502`: the upstream Connect code
+is mapped to what an OpenAI client expects, so subscription quota exhaustion arrives as
+`429` / `rate_limit_exceeded` and aggregators back off and retry instead of writing the
+gateway off as dead. Anything else upstream stays a `502`.
 
 Anything that speaks OpenAI works: Cline, Roo, Continue, LobeChat, one-api, your own
 scripts. If you aggregate several subscription providers behind
